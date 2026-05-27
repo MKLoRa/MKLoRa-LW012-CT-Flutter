@@ -35,6 +35,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
   Future<bool> Function()? _generalSave;
   Future<bool> Function()? _deviceSave;
   final _loraTabKey = GlobalKey<LoRaTabState>();
+  final _positionTabKey = GlobalKey<PositionTabState>();
+  final _generalTabKey = GlobalKey<GeneralTabState>();
   final _deviceTabKey = GlobalKey<DeviceTabState>();
 
   @override
@@ -60,7 +62,20 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     if (!mounted) return;
     await widget.session.protocol.syncTime();
     if (!mounted) return;
-    await _loraTabKey.currentState?.load(showOverlay: false);
+    await _loadTabData(_tabIndex, showOverlay: false);
+  }
+
+  Future<void> _loadTabData(int index, {bool showOverlay = true}) async {
+    switch (index) {
+      case 0:
+        await _loraTabKey.currentState?.load(showOverlay: showOverlay);
+      case 1:
+        await _positionTabKey.currentState?.load(showOverlay: showOverlay);
+      case 2:
+        await _generalTabKey.currentState?.load(showOverlay: showOverlay);
+      case 3:
+        await _deviceTabKey.currentState?.reload(showOverlay: showOverlay);
+    }
   }
 
   Future<void> _onDisconnect(Lw012DisconnectEvent event) async {
@@ -132,11 +147,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
   void _onTabChanged(int index) {
     setState(() => _tabIndex = index);
-    if (index == 0) {
-      _loraTabKey.currentState?.load();
-    } else if (index == 3) {
-      _deviceTabKey.currentState?.reload();
-    }
+    _loadTabData(index);
   }
 
   String get _title {
@@ -205,8 +216,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           index: _tabIndex,
           children: [
             LoRaTab(key: _loraTabKey, session: widget.session),
-            PositionTab(session: widget.session),
+            PositionTab(key: _positionTabKey, session: widget.session),
             GeneralTab(
+              key: _generalTabKey,
               session: widget.session,
               onSaveReady: (save) => _generalSave = save,
             ),

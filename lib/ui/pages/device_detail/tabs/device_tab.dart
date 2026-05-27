@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../../../ble/lw012.dart';
 import '../../../../../ble/lw012_device_session.dart';
 import '../../../../../ble/lw012_param_helpers.dart';
-import '../../../../../ble/lw012_protocol_named_api.dart';
 import '../../../../../ui/widgets/ble_loading_overlay.dart';
 import '../../../../../ui/widgets/common_confirm_dialog.dart';
 import '../../../../../ui/widgets/device_detail/bottom_picker_dialog.dart';
 import '../../../../../ui/widgets/device_detail/settings_widgets.dart';
 import '../../../../../viewmodels/ble_scan_view_model.dart';
+import '../device/export_data_page.dart';
 import '../device/indicator_settings_page.dart';
 import '../device/on_off_settings_page.dart';
 import '../device/system_info_page.dart';
@@ -24,9 +24,7 @@ class DeviceTab extends StatefulWidget {
 }
 
 class DeviceTabState extends State<DeviceTab> {
-  int _buzzerIndex = 1;
   int _timeZoneIndex = 40;
-  int _lowPowerIndex = 0;
   bool _lowPowerPayload = true;
   final _reportIntervalController = TextEditingController();
 
@@ -34,30 +32,27 @@ class DeviceTabState extends State<DeviceTab> {
   void initState() {
     super.initState();
     widget.onSaveReady(_save);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() async {
-    await runWithBleLoading(context, () async {
-      final api = widget.session.protocol;
-      final buzzer = await api.readBuzzerSoundChoose();
-      final timeZone = await api.readTimeZone();
-      final lowPower = await api.readLowPowerPercent();
-      final payload = await api.readLowPowerPayloadEnable();
-      final interval = await api.readLowPowerReportInterval();
-      if (!mounted) return;
-      setState(() {
-        _buzzerIndex = Lw012ParamHelpers.uint8(buzzer.data);
-        _timeZoneIndex = Lw012ParamHelpers.timeZoneIndexFromBytes(timeZone.data);
-        _lowPowerIndex = Lw012ParamHelpers.uint8(lowPower.data);
-        _lowPowerPayload = Lw012ParamHelpers.uint8(payload.data) == 1;
-        _reportIntervalController.text =
-            Lw012ParamHelpers.uint8(interval.data).toString();
-      });
-    });
+  Future<void> reload({bool showOverlay = true}) async {
+    await runWithBleLoading(
+      context,
+      () async {
+        final api = widget.session.protocol;
+        final timeZone = await api.readTimeZone();
+        final payload = await api.readLowPowerPayloadEnable();
+        final interval = await api.readLowPowerReportInterval();
+        if (!mounted) return;
+        setState(() {
+          _timeZoneIndex = Lw012ParamHelpers.timeZoneIndexFromBytes(timeZone.data);
+          _lowPowerPayload = Lw012ParamHelpers.uint8(payload.data) == 1;
+          _reportIntervalController.text =
+              Lw012ParamHelpers.uint8(interval.data).toString();
+        });
+      },
+      showOverlay: showOverlay,
+    );
   }
-
-  Future<void> reload() => _load();
 
   Future<bool> _save() async {
     final intervalText = _reportIntervalController.text.trim();
@@ -72,22 +67,11 @@ class DeviceTabState extends State<DeviceTab> {
     }
     final api = widget.session.protocol;
     final results = await Future.wait([
-      api.writeBuzzerSoundChoose([_buzzerIndex]),
       api.writeTimeZone(Lw012ParamHelpers.timeZoneBytesFromIndex(_timeZoneIndex)),
       api.writeLowPowerPayloadEnable([_lowPowerPayload ? 1 : 0]),
-      api.writeLowPowerPercent([_lowPowerIndex]),
       api.writeLowPowerReportInterval([interval]),
     ]);
     return results.every((r) => r);
-  }
-
-  Future<void> _pickBuzzer() async {
-    final index = await showBottomPicker(
-      context: context,
-      options: Lw012OptionLists.buzzerSounds,
-      selectedIndex: _buzzerIndex,
-    );
-    if (index != null) setState(() => _buzzerIndex = index);
   }
 
   Future<void> _pickTimeZone() async {
@@ -98,15 +82,6 @@ class DeviceTabState extends State<DeviceTab> {
       selectedIndex: _timeZoneIndex,
     );
     if (index != null) setState(() => _timeZoneIndex = index);
-  }
-
-  Future<void> _pickLowPower() async {
-    final index = await showBottomPicker(
-      context: context,
-      options: Lw012OptionLists.lowPowerPercents,
-      selectedIndex: _lowPowerIndex,
-    );
-    if (index != null) setState(() => _lowPowerIndex = index);
   }
 
   Future<void> _factoryReset() async {
@@ -132,11 +107,12 @@ class DeviceTabState extends State<DeviceTab> {
       padding: const EdgeInsets.all(10),
       children: [
         SettingsCard(
-          child: SettingsLabelRow(
-            label: 'Buzzer',
-            child: BlueValueButton(
-              text: Lw012OptionLists.buzzerSounds[_buzzerIndex.clamp(0, 2)],
-              onTap: _pickBuzzer,
+          child: SettingsNavRow(
+            title: 'Local Data Sync',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ExportDataPage(session: widget.session),
+              ),
             ),
           ),
         ),
@@ -166,14 +142,6 @@ class DeviceTabState extends State<DeviceTab> {
                 label: 'Low-power Payload',
                 value: _lowPowerPayload,
                 onChanged: (v) => setState(() => _lowPowerPayload = v ?? false),
-              ),
-              const SettingsDivider(),
-              SettingsLabelRow(
-                label: 'Low Power Prompt',
-                child: BlueValueButton(
-                  text: Lw012OptionLists.lowPowerPercents[_lowPowerIndex.clamp(0, 5)],
-                  onTap: _pickLowPower,
-                ),
               ),
               const SizedBox(height: 16),
               SettingsLabelRow(

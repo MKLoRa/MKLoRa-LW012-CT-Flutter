@@ -9,10 +9,17 @@ class DeviceItem extends StatelessWidget {
 
   const DeviceItem({super.key, required this.device, required this.onConnect});
 
+  bool get _isLowPower => device.lowPowerState == 1;
+
   @override
   Widget build(BuildContext context) {
     final name = device.name.isNotEmpty ? device.name : device.id.str;
-    final voltageV = (device.batteryVoltageMv / 1000).toStringAsFixed(3);
+    final voltageV = device.batteryVoltageMv > 0
+        ? '${(device.batteryVoltageMv / 1000).toStringAsFixed(3)}V'
+        : 'N/AV';
+    final txPowerLabel = device.txPowerLevel == null
+        ? 'Tx Power:N/AdBm'
+        : 'Tx Power:${device.txPowerLevel}dBm';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -33,7 +40,7 @@ class DeviceItem extends StatelessWidget {
                     SizedBox(
                       width: 52,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Icon(
                             Icons.signal_cellular_alt,
@@ -44,8 +51,8 @@ class DeviceItem extends StatelessWidget {
                           Text(
                             '${device.rssi}dBm',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF616161),
+                              fontSize: 10,
+                              color: Color(0xFF666666),
                             ),
                           ),
                         ],
@@ -58,17 +65,17 @@ class DeviceItem extends StatelessWidget {
                           Text(
                             name,
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF212121),
+                              color: Color(0xFF333333),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 5),
                           Text(
                             'MAC:${device.macAddress}',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF616161),
+                              fontSize: 14,
+                              color: Color(0xFF666666),
                             ),
                           ),
                         ],
@@ -76,12 +83,12 @@ class DeviceItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     SizedBox(
-                      height: 32,
+                      height: 35,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: BleScanViewModel.titleBarColor,
                           shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           elevation: 0,
                         ),
                         onPressed: onConnect,
@@ -99,42 +106,57 @@ class DeviceItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.battery_full,
-                      size: 18,
-                      color: BleScanViewModel.titleBarColor,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      device.lowPowerState == 1 ? 'Low Power' : 'Normal',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF616161),
+                    SizedBox(
+                      width: 52,
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            _isLowPower
+                                ? 'assets/images/lw012_low_battery.png'
+                                : 'assets/images/ic_battery.png',
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            _isLowPower ? 'Low' : 'Full',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF666666),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 18),
-                    Text(
-                      'Tx Power:${device.txPowerLevel ?? 'N/A'}dBm',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF616161),
+                    Expanded(
+                      child: Text(
+                        txPowerLabel,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF666666),
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     Text(
-                      '${voltageV}V',
+                      voltageV,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF616161),
+                        color: Color(0xFF666666),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Text(
-                      device.scanIntervalLabel,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF616161),
+                    SizedBox(
+                      width: 72,
+                      child: Text(
+                        device.scanIntervalLabel,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF666666),
+                        ),
                       ),
                     ),
                   ],

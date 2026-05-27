@@ -362,6 +362,54 @@ class SettingsHexField extends StatelessWidget {
   }
 }
 
+/// Native-style row: label on the left, check icon on the right (selector_cb_btn).
+class SettingsToggleRow extends StatelessWidget {
+  const SettingsToggleRow({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.topSpacing = 0,
+  });
+
+  final String label;
+  final bool value;
+  final VoidCallback onTap;
+  final double topSpacing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: topSpacing),
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: 40,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: DeviceDetailTheme.textPrimary,
+                  ),
+                ),
+              ),
+              Icon(
+                value ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: value ? DeviceDetailTheme.primary : DeviceDetailTheme.textSecondary,
+                size: 26,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class SettingsCheckboxRow extends StatelessWidget {
   const SettingsCheckboxRow({
     super.key,

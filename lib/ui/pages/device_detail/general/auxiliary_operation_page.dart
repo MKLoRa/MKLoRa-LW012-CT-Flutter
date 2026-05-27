@@ -6,8 +6,6 @@ import 'auxiliary/downlink_for_pos_page.dart';
 import 'auxiliary/shock_detection_page.dart';
 import 'auxiliary/man_down_detection_page.dart';
 import 'auxiliary/alarm_function_page.dart';
-import 'auxiliary/temp_monitor_page.dart';
-import 'auxiliary/light_monitor_page.dart';
 
 class AuxiliaryOperationPage extends StatelessWidget {
   const AuxiliaryOperationPage({super.key, required this.session});
@@ -24,8 +22,6 @@ class AuxiliaryOperationPage extends StatelessWidget {
           SettingsCard(child: SettingsNavRow(title: 'Shock Detection', onTap: () => push(context, ShockDetectionPage(session: session)))),
           SettingsCard(child: SettingsNavRow(title: 'Man Down Detection', onTap: () => push(context, ManDownDetectionPage(session: session)))),
           SettingsCard(child: SettingsNavRow(title: 'Tamper Alarm Function', onTap: () => push(context, AlarmFunctionPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Temp Monitor Settings', onTap: () => push(context, TempMonitorPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Light Monitor Settings', onTap: () => push(context, LightMonitorPage(session: session)))),
         ],
       ),
     );

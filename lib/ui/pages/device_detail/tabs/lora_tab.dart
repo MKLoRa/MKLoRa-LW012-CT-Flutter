@@ -112,24 +112,21 @@ class PositionTab extends StatefulWidget {
 }
 
 class PositionTabState extends State<PositionTab> {
+  bool _offlineFix = false;
   bool _gpsExtremeMode = false;
   bool _voltageReport = false;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load(showOverlay: false));
-  }
-
-  Future<void> _load({bool showOverlay = true}) async {
+  Future<void> load({bool showOverlay = true}) async {
     await runWithBleLoading(
       context,
       () async {
         final api = widget.session.protocol;
+        final offline = await api.readOfflineLocationEnable();
         final extreme = await api.readGpsExtremeModeL76C();
         final voltage = await api.readVoltageReportEnable();
         if (!mounted) return;
         setState(() {
+          _offlineFix = Lw012ParamHelpers.uint8(offline.data) == 1;
           _gpsExtremeMode = Lw012ParamHelpers.uint8(extreme.data) == 1;
           _voltageReport = Lw012ParamHelpers.uint8(voltage.data) == 1;
         });
@@ -138,17 +135,24 @@ class PositionTabState extends State<PositionTab> {
     );
   }
 
+  Future<void> _toggleOfflineFix(bool value) async {
+    await runWithBleLoading(context, () async {
+      await widget.session.protocol.writeOfflineLocationEnable([value ? 1 : 0]);
+      await load(showOverlay: false);
+    });
+  }
+
   Future<void> _toggleExtreme(bool value) async {
     await runWithBleLoading(context, () async {
       await widget.session.protocol.writeGpsExtremeModeL76C([value ? 1 : 0]);
-      await _load();
+      await load(showOverlay: false);
     });
   }
 
   Future<void> _toggleVoltage(bool value) async {
     await runWithBleLoading(context, () async {
       await widget.session.protocol.writeVoltageReportEnable([value ? 1 : 0]);
-      await _load();
+      await load(showOverlay: false);
     });
   }
 
@@ -175,6 +179,28 @@ class PositionTabState extends State<PositionTab> {
                 builder: (_) => PosGpsL76CFixPage(session: widget.session),
               ),
             ),
+          ),
+        ),
+        SettingsCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SettingsSwitchRow(
+                label: 'Offline Fix',
+                value: _offlineFix,
+                onChanged: _toggleOfflineFix,
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: Text(
+                  '* Whether to enable positioning when the device fails to connect to the Lorawan network',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: DeviceDetailTheme.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         SettingsCard(

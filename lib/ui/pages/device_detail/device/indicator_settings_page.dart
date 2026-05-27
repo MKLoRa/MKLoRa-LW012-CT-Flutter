@@ -17,16 +17,13 @@ class IndicatorSettingsPage extends StatefulWidget {
 }
 
 class _IndicatorSettingsPageState extends State<IndicatorSettingsPage> {
-  int _alarmState = 0;
   bool _deviceState = false;
+  bool _lowPower = false;
+  bool _bleAdvCheck = false;
+  bool _networkCheck = false;
   bool _fix = false;
   bool _fixSuccess = false;
   bool _fixFail = false;
-  bool _networkCheck = false;
-  bool _fullCharge = false;
-  bool _charging = false;
-  bool _lowPower = false;
-  bool _bleAdvCheck = false;
 
   @override
   void initState() {
@@ -37,20 +34,20 @@ class _IndicatorSettingsPageState extends State<IndicatorSettingsPage> {
   Future<void> _load() async {
     await runWithBleLoading(context, () async {
       final result = await widget.session.protocol.readIndicatorStatus();
-      if (!mounted || result.data.length < 2) return;
-      final value = Lw012ParamHelpers.uint16(result.data);
+      if (!mounted || result.data.isEmpty) return;
+      final value = result.data.length >= 2
+          ? Lw012ParamHelpers.uint16(result.data)
+          : Lw012ParamHelpers.uint8(result.data);
       final decoded = Lw012DataCodec.decodeIndicator(value);
-      _alarmState = decoded['alarmState']! ? 2 : 0;
-      _deviceState = decoded['deviceState']!;
-      _fix = decoded['fix']!;
-      _fixSuccess = decoded['fixSuccess']!;
-      _fixFail = decoded['fixFail']!;
-      _networkCheck = decoded['networkCheck']!;
-      _fullCharge = decoded['fullCharge']!;
-      _charging = decoded['charging']!;
-      _lowPower = decoded['lowPower']!;
-      _bleAdvCheck = decoded['bleAdvCheck']!;
-      setState(() {});
+      setState(() {
+        _deviceState = decoded['deviceState']!;
+        _lowPower = decoded['lowPower']!;
+        _bleAdvCheck = decoded['bleAdvCheck']!;
+        _networkCheck = decoded['networkCheck']!;
+        _fix = decoded['fix']!;
+        _fixSuccess = decoded['fixSuccess']!;
+        _fixFail = decoded['fixFail']!;
+      });
     });
   }
 
@@ -58,19 +55,26 @@ class _IndicatorSettingsPageState extends State<IndicatorSettingsPage> {
     await runWithBleLoading(context, () async {
       final value = Lw012DataCodec.encodeIndicator(
         deviceState: _deviceState,
-        alarmState: _alarmState,
         fix: _fix,
         fixSuccess: _fixSuccess,
         fixFail: _fixFail,
         networkCheck: _networkCheck,
-        fullCharge: _fullCharge,
-        charging: _charging,
         lowPower: _lowPower,
         bleAdvCheck: _bleAdvCheck,
       );
-      final ok = await widget.session.protocol.writeIndicatorStatus(Lw012ParamHelpers.uint16Bytes(value));
+      final ok = await widget.session.protocol
+          .writeIndicatorStatus(Lw012ParamHelpers.single(value));
       if (mounted) await saveWithToast(context, () async => ok);
     });
+  }
+
+  Widget _groupCard(List<Widget> children) {
+    return SettingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
   }
 
   @override
@@ -82,15 +86,51 @@ class _IndicatorSettingsPageState extends State<IndicatorSettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(10),
         children: [
-          SettingsCard(child: SettingsSwitchRow(label: 'Device State', value: _deviceState, onChanged: (v) => setState(() => _deviceState = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Fix', value: _fix, onChanged: (v) => setState(() => _fix = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Fix Success', value: _fixSuccess, onChanged: (v) => setState(() => _fixSuccess = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Fix Fail', value: _fixFail, onChanged: (v) => setState(() => _fixFail = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Network Check', value: _networkCheck, onChanged: (v) => setState(() => _networkCheck = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Full Charge', value: _fullCharge, onChanged: (v) => setState(() => _fullCharge = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Charging', value: _charging, onChanged: (v) => setState(() => _charging = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Low Power', value: _lowPower, onChanged: (v) => setState(() => _lowPower = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'BLE ADV Check', value: _bleAdvCheck, onChanged: (v) => setState(() => _bleAdvCheck = v))),
+          _groupCard([
+            SettingsSwitchRow(
+              label: 'Device State',
+              value: _deviceState,
+              onChanged: (v) => setState(() => _deviceState = v),
+            ),
+            const SettingsDivider(),
+            SettingsSwitchRow(
+              label: 'Low-power',
+              value: _lowPower,
+              onChanged: (v) => setState(() => _lowPower = v),
+            ),
+          ]),
+          _groupCard([
+            SettingsSwitchRow(
+              label: 'Bluetooth Broadcast',
+              value: _bleAdvCheck,
+              onChanged: (v) => setState(() => _bleAdvCheck = v),
+            ),
+            const SettingsDivider(),
+            SettingsSwitchRow(
+              label: 'Network Check',
+              value: _networkCheck,
+              onChanged: (v) => setState(() => _networkCheck = v),
+            ),
+          ]),
+          _groupCard([
+            SettingsSwitchRow(
+              label: 'In Fix',
+              value: _fix,
+              onChanged: (v) => setState(() => _fix = v),
+            ),
+            const SettingsDivider(),
+            SettingsSwitchRow(
+              label: 'Fix Successful',
+              value: _fixSuccess,
+              onChanged: (v) => setState(() => _fixSuccess = v),
+            ),
+            const SettingsDivider(),
+            SettingsSwitchRow(
+              label: 'Fail To Fix',
+              value: _fixFail,
+              onChanged: (v) => setState(() => _fixFail = v),
+            ),
+          ]),
         ],
       ),
     );

@@ -28,31 +28,34 @@ class GeneralTabState extends State<GeneralTab> {
   void initState() {
     super.initState();
     widget.onSaveReady(_save);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() async {
-    await runWithBleLoading(context, () async {
-      final result = await widget.session.protocol.readHeartbeatInterval();
-      if (!mounted) return;
-      _heartbeatController.text =
-          Lw012ParamHelpers.uint16(result.data).toString();
-    });
+  Future<void> load({bool showOverlay = true}) async {
+    await runWithBleLoading(
+      context,
+      () async {
+        final result = await widget.session.protocol.readHeartbeatInterval();
+        if (!mounted) return;
+        _heartbeatController.text =
+            Lw012ParamHelpers.bytesToInt(result.data).toString();
+      },
+      showOverlay: showOverlay,
+    );
   }
 
   Future<bool> _save() async {
     final text = _heartbeatController.text.trim();
     final value = int.tryParse(text);
-    if (value == null || value < 1 || value > 14400) {
+    if (value == null || value < 300 || value > 86400) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Heartbeat interval must be 1~14400')),
+          const SnackBar(content: Text('Heartbeat interval must be 300~86400')),
         );
       }
       return false;
     }
     return widget.session.protocol
-        .writeHeartbeatInterval(Lw012ParamHelpers.uint16Bytes(value));
+        .writeHeartbeatInterval(Lw012ParamHelpers.int32Bytes(value));
   }
 
   @override
@@ -111,9 +114,9 @@ class GeneralTabState extends State<GeneralTab> {
             label: 'Heartbeat Interval',
             child: SettingsTextField(
               controller: _heartbeatController,
-              hint: '1~14400',
+              hint: '300~86400',
               maxLength: 5,
-              suffix: 'Mins',
+              suffix: 'S',
             ),
           ),
         ),

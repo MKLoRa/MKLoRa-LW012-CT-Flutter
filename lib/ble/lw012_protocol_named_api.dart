@@ -1,4 +1,5 @@
 import 'lw012_ble_client.dart';
+import 'lw012_param_helpers.dart';
 import 'lw012_param_key.dart';
 import 'lw012_protocol_api.dart';
 
@@ -20,8 +21,6 @@ extension Lw012ProtocolNamedReadApi on Lw012ProtocolApi {
   Future<Lw012ParamResult> readBatteryPower() => readParam(Lw012ParamKey.batteryPower);
   Future<Lw012ParamResult> readPcbaStatus() => readParam(Lw012ParamKey.pcbaStatus);
   Future<Lw012ParamResult> readSelftestStatus() => readParam(Lw012ParamKey.selftestStatus);
-  Future<Lw012ParamResult> readTempCurrent() => readParam(Lw012ParamKey.tempCurrent);
-  Future<Lw012ParamResult> readLightCurrent() => readParam(Lw012ParamKey.lightCurrent);
   Future<Lw012ParamResult> readBatteryInfoAll() => readParam(Lw012ParamKey.batteryInfoAll);
   Future<Lw012ParamResult> readLowPowerPercent() => readParam(Lw012ParamKey.lowPowerPercent);
   Future<Lw012ParamResult> readLowPowerPayloadEnable() => readParam(Lw012ParamKey.lowPowerPayloadEnable);
@@ -136,17 +135,13 @@ extension Lw012ProtocolNamedReadApi on Lw012ProtocolApi {
   Future<Lw012ParamResult> readShockThreshold() => readParam(Lw012ParamKey.shockThreshold);
   Future<Lw012ParamResult> readShockReportInterval() => readParam(Lw012ParamKey.shockReportInterval);
   Future<Lw012ParamResult> readShockTimeout() => readParam(Lw012ParamKey.shockTimeout);
-  Future<Lw012ParamResult> readLightMonitorEnable() => readParam(Lw012ParamKey.lightMonitorEnable);
-  Future<Lw012ParamResult> readLightSampleRate() => readParam(Lw012ParamKey.lightSampleRate);
-  Future<Lw012ParamResult> readLightAlarmThreshold() => readParam(Lw012ParamKey.lightAlarmThreshold);
-  Future<Lw012ParamResult> readTempMonitorEnable() => readParam(Lw012ParamKey.tempMonitorEnable);
-  Future<Lw012ParamResult> readTempSampleRate() => readParam(Lw012ParamKey.tempSampleRate);
-  Future<Lw012ParamResult> readTempAlarmThreshold() => readParam(Lw012ParamKey.tempAlarmThreshold);
   Future<Lw012ParamResult> readTamperAlarmEnable() => readParam(Lw012ParamKey.tamperAlarmEnable);
   Future<Lw012ParamResult> readTamperAlarmThreshold() => readParam(Lw012ParamKey.tamperAlarmThreshold);
   Future<Lw012ParamResult> readTamperAlarmReportInterval() => readParam(Lw012ParamKey.tamperAlarmReportInterval);
   Future<Lw012ParamResult> readManDownDetectionEnable() => readParam(Lw012ParamKey.manDownDetectionEnable);
   Future<Lw012ParamResult> readManDownDetectionTimeout() => readParam(Lw012ParamKey.manDownDetectionTimeout);
+  Future<Lw012ParamResult> readOfflineLocationEnable() =>
+      readParam(Lw012ParamKey.offlineLocationEnable);
   Future<Lw012ParamResult> readGpsExtremeModeL76C() => readParam(Lw012ParamKey.gpsExtremeModeL76C);
   Future<Lw012ParamResult> readOutdoorBleReportInterval() => readParam(Lw012ParamKey.outdoorBleReportInterval);
   Future<Lw012ParamResult> readOutdoorGpsReportInterval() => readParam(Lw012ParamKey.outdoorGpsReportInterval);
@@ -293,12 +288,6 @@ extension Lw012ProtocolNamedWriteApi on Lw012ProtocolApi {
   Future<bool> writeShockThreshold(List<int> data) => writeParam(Lw012ParamKey.shockThreshold, data);
   Future<bool> writeShockReportInterval(List<int> data) => writeParam(Lw012ParamKey.shockReportInterval, data);
   Future<bool> writeShockTimeout(List<int> data) => writeParam(Lw012ParamKey.shockTimeout, data);
-  Future<bool> writeLightMonitorEnable(List<int> data) => writeParam(Lw012ParamKey.lightMonitorEnable, data);
-  Future<bool> writeLightSampleRate(List<int> data) => writeParam(Lw012ParamKey.lightSampleRate, data);
-  Future<bool> writeLightAlarmThreshold(List<int> data) => writeParam(Lw012ParamKey.lightAlarmThreshold, data);
-  Future<bool> writeTempMonitorEnable(List<int> data) => writeParam(Lw012ParamKey.tempMonitorEnable, data);
-  Future<bool> writeTempSampleRate(List<int> data) => writeParam(Lw012ParamKey.tempSampleRate, data);
-  Future<bool> writeTempAlarmThreshold(List<int> data) => writeParam(Lw012ParamKey.tempAlarmThreshold, data);
   Future<bool> writeTamperAlarmEnable(List<int> data) => writeParam(Lw012ParamKey.tamperAlarmEnable, data);
   Future<bool> writeTamperAlarmThreshold(List<int> data) => writeParam(Lw012ParamKey.tamperAlarmThreshold, data);
   Future<bool> writeTamperAlarmReportInterval(List<int> data) => writeParam(Lw012ParamKey.tamperAlarmReportInterval, data);
@@ -306,6 +295,8 @@ extension Lw012ProtocolNamedWriteApi on Lw012ProtocolApi {
   Future<bool> writeManDownDetectionTimeout(List<int> data) => writeParam(Lw012ParamKey.manDownDetectionTimeout, data);
   Future<bool> writeManDownDetectionReset(List<int> data) => writeParam(Lw012ParamKey.manDownDetectionReset, data);
   Future<bool> writeManDownDetectionResetEmpty() => writeParam(Lw012ParamKey.manDownDetectionReset, const []);
+  Future<bool> writeOfflineLocationEnable(List<int> data) =>
+      writeParam(Lw012ParamKey.offlineLocationEnable, data);
   Future<bool> writeGpsExtremeModeL76C(List<int> data) => writeParam(Lw012ParamKey.gpsExtremeModeL76C, data);
   Future<bool> writeOutdoorBleReportInterval(List<int> data) => writeParam(Lw012ParamKey.outdoorBleReportInterval, data);
   Future<bool> writeOutdoorGpsReportInterval(List<int> data) => writeParam(Lw012ParamKey.outdoorGpsReportInterval, data);
@@ -319,4 +310,10 @@ extension Lw012ProtocolNamedWriteApi on Lw012ProtocolApi {
   Future<bool> writeClearStorageData(List<int> data) => writeParam(Lw012ParamKey.clearStorageData, data);
   Future<bool> writeClearStorageDataEmpty() => writeParam(Lw012ParamKey.clearStorageData, const []);
   Future<bool> writeSyncEnable(List<int> data) => writeParam(Lw012ParamKey.syncEnable, data);
+
+  Future<bool> startStorageDataRead(int days) =>
+      writeReadStorageData(Lw012ParamHelpers.uint16Bytes(days));
+
+  Future<bool> setStorageSyncEnabled(bool enabled) =>
+      writeSyncEnable([enabled ? 1 : 0]);
 }

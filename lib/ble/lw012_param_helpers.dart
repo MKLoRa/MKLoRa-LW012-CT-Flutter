@@ -28,22 +28,33 @@ class Lw012ParamHelpers {
     return (data[offset] << 8) | data[offset + 1];
   }
 
-  static int int32(List<int> data, {int defaultValue = 0}) {
-    if (data.length < 4) {
+  /// Big-endian integer from 1–4 byte param payloads (matches native MokoUtils.toInt).
+  static int bytesToInt(List<int> data, {int defaultValue = 0}) {
+    if (data.isEmpty) {
       return defaultValue;
     }
-    return ByteData.sublistView(Uint8List.fromList(data.sublist(0, 4))).getInt32(0);
+    var value = 0;
+    for (final byte in data) {
+      value = (value << 8) | (byte & 0xFF);
+    }
+    return value;
+  }
+
+  /// Big-endian 32-bit value from device payloads (matches native MokoUtils.toInt).
+  static int int32(List<int> data, {int defaultValue = 0}) {
+    return bytesToInt(data, defaultValue: defaultValue);
   }
 
   static List<int> single(int value) => [value & 0xFF];
 
   static List<int> uint16Bytes(int value) => [(value >> 8) & 0xFF, value & 0xFF];
 
-  static List<int> int32Bytes(int value) {
-    final bytes = ByteData(4);
-    bytes.setInt32(0, value);
-    return bytes.buffer.asUint8List();
-  }
+  static List<int> int32Bytes(int value) => [
+        (value >> 24) & 0xFF,
+        (value >> 16) & 0xFF,
+        (value >> 8) & 0xFF,
+        value & 0xFF,
+      ];
 
   static String bytesToString(List<int> data) {
     if (data.isEmpty) {

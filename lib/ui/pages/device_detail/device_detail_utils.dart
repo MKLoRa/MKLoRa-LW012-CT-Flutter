@@ -1,7 +1,29 @@
 import 'package:flutter/material.dart';
 
+import '../../../ble/lw012_ble_client.dart';
+
 Future<void> pushDetailPage(BuildContext context, Widget page) {
   return Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+}
+
+void showProtocolResultToast(BuildContext context, {required bool ok}) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        ok
+            ? 'Save Successfully！'
+            : 'Opps！Save failed. Please check the input characters and try again.',
+      ),
+    ),
+  );
+}
+
+void showProtocolTimeoutToast(BuildContext context) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text(Lw012ProtocolTimeoutException.userMessage)),
+  );
 }
 
 Future<bool> saveWithToast(
@@ -12,14 +34,6 @@ Future<bool> saveWithToast(
   if (!context.mounted) {
     return ok;
   }
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        ok
-            ? 'Save Successfully！'
-            : 'Opps！Save failed. Please check the input characters and try again.',
-      ),
-    ),
-  );
+  showProtocolResultToast(context, ok: ok);
   return ok;
 }

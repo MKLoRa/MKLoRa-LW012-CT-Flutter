@@ -94,13 +94,16 @@ class _MessageTypeSettingsPageState extends State<MessageTypeSettingsPage> {
                       onTap: () => _pickType(row),
                     ),
                   ),
-                  SettingsLabelRow(
-                    label: '${row.label} Retransmission',
-                    child: BlueValueButton(
-                      text: Lw012OptionLists.retransmissionTimes[row.retransIndex],
-                      onTap: () => _pickRetrans(row),
+                  if (row.confirmed) ...[
+                    const SettingsDivider(),
+                    SettingsLabelRow(
+                      label: 'Max Retransmission Times',
+                      child: BlueValueButton(
+                        text: Lw012OptionLists.retransmissionTimes[row.retransIndex],
+                        onTap: () => _pickRetrans(row),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

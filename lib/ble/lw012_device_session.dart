@@ -2,6 +2,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../models/ble_device_info.dart';
 import 'lw012_ble_client.dart';
+import 'lw012_export_data_store.dart';
 import 'lw012_protocol_api.dart';
 
 class Lw012DeviceSession {
@@ -16,6 +17,7 @@ class Lw012DeviceSession {
   final Lw012BleClient client;
   final Lw012ProtocolApi protocol;
   final Lw012DeviceInfoApi deviceInfoApi;
+  final Lw012ExportDataStore exportData = Lw012ExportDataStore();
 
   static Lw012DeviceSession? _active;
 

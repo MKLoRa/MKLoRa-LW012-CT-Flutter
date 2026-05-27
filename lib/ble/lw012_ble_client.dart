@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'lw012_constants.dart';
+import 'lw012_data_codec.dart';
 import 'lw012_disconnect_event.dart';
 import 'lw012_protocol_codec.dart';
 import 'lw012_protocol_logger.dart';
@@ -26,10 +27,15 @@ class Lw012BleClient {
   final Map<String, Completer<List<int>>> _pendingRequests = {};
   final Map<String, List<List<int>>> _packetBuffers = {};
   final _disconnectController = StreamController<Lw012DisconnectEvent>.broadcast();
+  final _storageNotifyController =
+      StreamController<Lw012StorageNotifyParseResult>.broadcast();
   StreamSubscription<BluetoothConnectionState>? _connectionStateSubscription;
   Future<void> _requestChain = Future<void>.value();
 
   Stream<Lw012DisconnectEvent> get disconnectEvents => _disconnectController.stream;
+
+  Stream<Lw012StorageNotifyParseResult> get storageNotifyEvents =>
+      _storageNotifyController.stream;
 
   BluetoothDevice? get device => _device;
   bool get isConnected => _device?.isConnected ?? false;
@@ -51,7 +57,7 @@ class Lw012BleClient {
         if (device.isConnected) {
           await device.disconnect();
         }
-        await device.connect(
+      await device.connect(
           timeout: remaining,
           autoConnect: false,
         );
@@ -248,6 +254,15 @@ class Lw012BleClient {
       return;
     }
 
+    if (key == 'storageData') {
+      Lw012ProtocolLogger.logRx(channel: key, payload: value);
+      final parsed = Lw012DataCodec.parseStorageNotify(value);
+      if (parsed != null) {
+        _storageNotifyController.add(parsed);
+      }
+      return;
+    }
+
     if (value[0] == Lw012ProtocolConstants.headPacket) {
       Lw012ProtocolLogger.logRx(channel: key, payload: value, partialPacket: true);
       final requestKey = _requestKeyFromPacket(value);
@@ -293,7 +308,7 @@ class Lw012BleClient {
           Lw012ProtocolConstants.requestTimeout,
           onTimeout: () {
             Lw012ProtocolLogger.logError('Request timeout for $requestKey');
-            throw TimeoutException('Request timeout for $requestKey');
+            throw Lw012ProtocolTimeoutException(requestKey);
           },
         );
         if (matcher != null && !matcher(response)) {
@@ -450,4 +465,12 @@ class Lw012ProtocolException implements Exception {
 
   @override
   String toString() => 'Lw012ProtocolException: $message';
+}
+
+/// BLE param read/write did not receive a response in time (native export uses "Failed").
+class Lw012ProtocolTimeoutException extends TimeoutException {
+  Lw012ProtocolTimeoutException(String requestKey)
+      : super(requestKey, Lw012ProtocolConstants.requestTimeout);
+
+  static const userMessage = 'Failed';
 }

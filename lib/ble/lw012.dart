@@ -2,6 +2,8 @@ export 'lw012_ble_client.dart';
 export 'lw012_constants.dart';
 export 'lw012_data_codec.dart';
 export 'lw012_device_session.dart';
+export 'lw012_export_data_store.dart';
+export 'lw012_tracked_file.dart';
 export 'lw012_disconnect_event.dart';
 export 'lw012_lora_conn_helpers.dart';
 export 'lw012_option_lists.dart';

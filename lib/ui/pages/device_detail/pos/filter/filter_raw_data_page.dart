@@ -16,6 +16,7 @@ import 'filter_tlm_page.dart';
 import 'filter_uid_page.dart';
 import 'filter_url_page.dart';
 
+/// Filter by Raw Data — layout/order aligned with native FilterRawDataSwitchActivity.
 class FilterRawDataPage extends StatefulWidget {
   const FilterRawDataPage({super.key, required this.session});
   final Lw012DeviceSession session;
@@ -85,18 +86,36 @@ class _FilterRawDataPageState extends State<FilterRawDataPage> {
       if (!ok) {
         setState(() => setLocal(current));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Opps！Save failed. Please check the input characters and try again.')),
+          const SnackBar(
+            content: Text(
+              'Opps！Save failed. Please check the input characters and try again.',
+            ),
+          ),
         );
         return;
       }
       await _load();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save Successfully！')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Save Successfully！')),
+        );
       }
     });
   }
 
   String _onOff(bool value) => value ? 'ON' : 'OFF';
+
+  Widget _navRow({
+    required String title,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return SettingsNavRow(
+      title: title,
+      trailing: _onOff(enabled),
+      onTap: onTap,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,19 +125,103 @@ class _FilterRawDataPageState extends State<FilterRawDataPage> {
       body: ListView(
         padding: const EdgeInsets.all(10),
         children: [
-          SettingsCard(child: SettingsNavRow(title: 'Filter by Other', trailing: _onOff(_other), onTap: () => _openSubPage(FilterOtherPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by iBeacon', trailing: _onOff(_ibeacon), onTap: () => _openSubPage(FilterIbeaconPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by UID', trailing: _onOff(_uid), onTap: () => _openSubPage(FilterUidPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by URL', trailing: _onOff(_url), onTap: () => _openSubPage(FilterUrlPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by TLM', trailing: _onOff(_tlm), onTap: () => _openSubPage(FilterTlmPage(session: session)))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Filter by BXP Acc', value: _bxpAcc, onChanged: (_) => _toggleBxp(current: _bxpAcc, write: (v) => session.protocol.writeFilterBxpAcc([v]), setLocal: (v) => _bxpAcc = v))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Filter by BXP TH', value: _bxpTh, onChanged: (_) => _toggleBxp(current: _bxpTh, write: (v) => session.protocol.writeFilterBxpTh([v]), setLocal: (v) => _bxpTh = v))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by BXP Tag', trailing: _onOff(_bxpTag), onTap: () => _openSubPage(FilterBxpTagPage(session: session)))),
-          SettingsCard(child: SettingsSwitchRow(label: 'Filter by BXP Device', value: _bxpDevice, onChanged: (_) => _toggleBxp(current: _bxpDevice, write: (v) => session.protocol.writeFilterBxpDevice([v]), setLocal: (v) => _bxpDevice = v))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by BXP Button', trailing: _onOff(_bxpButton), onTap: () => _openSubPage(FilterBxpButtonPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by MK PIR', trailing: _onOff(_pir), onTap: () => _openSubPage(FilterMkPirPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by MK TOF', trailing: _onOff(_tof), onTap: () => _openSubPage(FilterMkTofPage(session: session)))),
-          SettingsCard(child: SettingsNavRow(title: 'Filter by BXP iBeacon', trailing: _onOff(_bxpIbeacon), onTap: () => _openSubPage(FilterBxpIbeaconPage(session: session)))),
+          SettingsCard(
+            margin: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _navRow(
+                  title: 'iBeacon',
+                  enabled: _ibeacon,
+                  onTap: () => _openSubPage(FilterIbeaconPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'Eddystone-UID',
+                  enabled: _uid,
+                  onTap: () => _openSubPage(FilterUidPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'Eddystone-URL',
+                  enabled: _url,
+                  onTap: () => _openSubPage(FilterUrlPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'Eddystone-TLM',
+                  enabled: _tlm,
+                  onTap: () => _openSubPage(FilterTlmPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'BXP - iBeacon',
+                  enabled: _bxpIbeacon,
+                  onTap: () => _openSubPage(FilterBxpIbeaconPage(session: session)),
+                ),
+                const SettingsDivider(),
+                SettingsSwitchRow(
+                  label: 'BXP - Device Info',
+                  value: _bxpDevice,
+                  onChanged: (_) => _toggleBxp(
+                    current: _bxpDevice,
+                    write: (v) => session.protocol.writeFilterBxpDevice([v]),
+                    setLocal: (v) => _bxpDevice = v,
+                  ),
+                ),
+                const SettingsDivider(),
+                SettingsSwitchRow(
+                  label: 'BXP – ACC',
+                  value: _bxpAcc,
+                  onChanged: (_) => _toggleBxp(
+                    current: _bxpAcc,
+                    write: (v) => session.protocol.writeFilterBxpAcc([v]),
+                    setLocal: (v) => _bxpAcc = v,
+                  ),
+                ),
+                const SettingsDivider(),
+                SettingsSwitchRow(
+                  label: 'BXP - T&H',
+                  value: _bxpTh,
+                  onChanged: (_) => _toggleBxp(
+                    current: _bxpTh,
+                    write: (v) => session.protocol.writeFilterBxpTh([v]),
+                    setLocal: (v) => _bxpTh = v,
+                  ),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'BXP - Button',
+                  enabled: _bxpButton,
+                  onTap: () => _openSubPage(FilterBxpButtonPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'BXP - T&S',
+                  enabled: _bxpTag,
+                  onTap: () => _openSubPage(FilterBxpTagPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'MK-PIR',
+                  enabled: _pir,
+                  onTap: () => _openSubPage(FilterMkPirPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'MK-TOF',
+                  enabled: _tof,
+                  onTap: () => _openSubPage(FilterMkTofPage(session: session)),
+                ),
+                const SettingsDivider(),
+                _navRow(
+                  title: 'Other',
+                  enabled: _other,
+                  onTap: () => _openSubPage(FilterOtherPage(session: session)),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

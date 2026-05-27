@@ -63,6 +63,20 @@ class Lw012TimeSegment {
   }
 }
 
+class Lw012ExportRecord {
+  Lw012ExportRecord({required this.rawData, DateTime? time}) : time = time ?? DateTime.now();
+
+  final DateTime time;
+  final String rawData;
+}
+
+class Lw012StorageNotifyParseResult {
+  const Lw012StorageNotifyParseResult({this.records, this.totalSum});
+
+  final List<Lw012ExportRecord>? records;
+  final int? totalSum;
+}
+
 class Lw012DataCodec {
   Lw012DataCodec._();
 
@@ -160,43 +174,74 @@ class Lw012DataCodec {
     return bytes;
   }
 
+  /// LW012-CT indicator bitmask (single byte), aligned with native IndicatorSettingsActivity.
   static int encodeIndicator({
     required bool deviceState,
-    required int alarmState,
     required bool fix,
     required bool fixSuccess,
     required bool fixFail,
     required bool networkCheck,
-    required bool fullCharge,
-    required bool charging,
     required bool lowPower,
     required bool bleAdvCheck,
   }) {
-    return (deviceState ? 1 : 0) |
-        alarmState |
-        (fix ? 4 : 0) |
-        (fixSuccess ? 8 : 0) |
-        (fixFail ? 16 : 0) |
-        (networkCheck ? 32 : 0) |
-        (fullCharge ? 64 : 0) |
-        (charging ? 128 : 0) |
-        (lowPower ? 256 : 0) |
-        (bleAdvCheck ? 512 : 0);
+    return (fix ? 1 : 0) |
+        (fixSuccess ? 2 : 0) |
+        (fixFail ? 4 : 0) |
+        (networkCheck ? 8 : 0) |
+        (lowPower ? 16 : 0) |
+        (bleAdvCheck ? 32 : 0) |
+        (deviceState ? 64 : 0);
   }
 
   static Map<String, bool> decodeIndicator(int value) {
+    final v = value & 0xFF;
     return {
-      'deviceState': (value & 1) == 1,
-      'alarmState': (value & 2) == 2,
-      'fix': (value & 4) == 4,
-      'fixSuccess': (value & 8) == 8,
-      'fixFail': (value & 16) == 16,
-      'networkCheck': (value & 32) == 32,
-      'fullCharge': (value & 64) == 64,
-      'charging': (value & 128) == 128,
-      'lowPower': (value & 256) == 256,
-      'bleAdvCheck': (value & 512) == 512,
+      'deviceState': (v & 64) == 64,
+      'fix': (v & 1) == 1,
+      'fixSuccess': (v & 2) == 2,
+      'fixFail': (v & 4) == 4,
+      'networkCheck': (v & 8) == 8,
+      'lowPower': (v & 16) == 16,
+      'bleAdvCheck': (v & 32) == 32,
     };
+  }
+
+  static Lw012StorageNotifyParseResult? parseStorageNotify(List<int> value) {
+    if (value.length < 6 || value[0] != 0xED || value[1] != 0x02) {
+      return null;
+    }
+    // Native ExportDataActivity: MokoUtils.toInt(value[2..4]) == 0x01
+    final cmd = Lw012ParamHelpers.uint16(value, offset: 2);
+    if (cmd != 0x01) {
+      return null;
+    }
+    final dataCount = value[5] & 0xFF;
+    if (dataCount > 0) {
+      final notifyTime = DateTime.now();
+      final records = <Lw012ExportRecord>[];
+      var index = 6;
+      while (index < value.length) {
+        final dataLength = value[index] & 0xFF;
+        index++;
+        var rawData = '';
+        if (dataLength > 0 && index + dataLength <= value.length) {
+          rawData = Lw012ParamHelpers.bytesToHex(
+            value.sublist(index, index + dataLength),
+          );
+          index += dataLength;
+        }
+        records.add(Lw012ExportRecord(rawData: rawData, time: notifyTime));
+      }
+      return Lw012StorageNotifyParseResult(records: records);
+    }
+    if (value.length > 5) {
+      var sum = 0;
+      for (var i = 5; i < value.length; i++) {
+        sum = (sum << 8) | (value[i] & 0xFF);
+      }
+      return Lw012StorageNotifyParseResult(totalSum: sum);
+    }
+    return null;
   }
 
   static List<int> encodeLoraUplinkStrategy({
@@ -207,12 +252,4 @@ class Lw012DataCodec {
       [adr ? 1 : 0, 1, dr1, dr2];
 
   static List<int> encodeAccCondition(int threshold, int duration) => [threshold, duration];
-
-  static List<int> encodeTempEnable({required bool monitor, required bool alarm}) =>
-      [(monitor ? 1 : 0) | (alarm ? 2 : 0)];
-
-  static List<int> encodeTempThreshold(int min, int max) => [min, max];
-
-  static List<int> encodeLightEnable({required bool monitor, required bool alarm}) =>
-      [(monitor ? 1 : 0) | (alarm ? 2 : 0)];
 }

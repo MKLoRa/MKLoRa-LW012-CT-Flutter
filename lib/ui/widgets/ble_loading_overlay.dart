@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import '../../ble/lw012_ble_client.dart';
+import '../pages/device_detail/device_detail_utils.dart';
 
 /// Global loading visibility controller.
 /// Uses an app-level overlay instead of [showDialog], so page navigation
@@ -94,6 +99,16 @@ Future<T> runWithBleLoading<T>(
   }
   try {
     return await task();
+  } on Lw012ProtocolTimeoutException {
+    if (context.mounted) {
+      showProtocolTimeoutToast(context);
+    }
+    rethrow;
+  } on TimeoutException {
+    if (context.mounted) {
+      showProtocolTimeoutToast(context);
+    }
+    rethrow;
   } finally {
     if (showOverlay) {
       hideBleLoading(context);
