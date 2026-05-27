@@ -348,13 +348,7 @@ Lw012ProtocolLogger.enabled = false;
 
 ---
 
-## 9. Android Package
-
-`com.moko.ft.lw012ct`
-
----
-
-## 10. Typical Flow
+## 9. Typical Flow
 
 ```
 Scan page
@@ -369,13 +363,6 @@ Scan page
 
 ---
 
-## Differences from LW010-CT Flutter
+## Repository
 
-| Item | LW010-CT | LW012-CT |
-|------|----------|----------|
-| Scan Service Data UUID | `AA15` / `BB10` | `AA17` |
-| Android package | `com.moko.ft.lw010ct` | `com.moko.ft.lw012ct` |
-| Param key set | LW010 `ParamsKeyEnum` | LW012 `ParamsKeyEnum` |
-| Native reference | `LW010_CT_Android` | `LW012_CT_Android` |
-
-Protocol usage patterns (session, named API, DFU, disconnect handling) are the same; refer to this README and `lib/ble/lw012_*.dart` for LW012-specific keys and payloads.
+- GitHub: [MKLoRa/MKLoRa-LW012-CT-Flutter](https://github.com/MKLoRa/MKLoRa-LW012-CT-Flutter)
