@@ -68,22 +68,30 @@ class BleDeviceInfo {
     );
   }
 
+  /// Service Data (AD type 0x16) payload: leading fields + last 6 bytes = MAC.
+  static String _macFromServiceData(List<int> data) {
+    final macBytes = data.sublist(data.length - 6);
+    return macBytes
+        .map((b) => (b & 0xFF).toRadixString(16).padLeft(2, '0').toUpperCase())
+        .join(':');
+  }
+
   static BleDeviceInfo? fromScanResult(ScanResult result) {
     for (final data in result.advertisementData.serviceData.values) {
-      if (data.length >= 4) {
+      // AA17 service data: min 4-byte header + 6-byte MAC at tail.
+      if (data.length >= 10) {
         final deviceType = data[0] & 0xFF;
         final lowPowerState = (data[1] >> 4) & 0x01;
         final passwordEnabled = ((data[1] >> 5) & 0x01) == 1;
-        final batteryVoltageMv = data.length >= 4
-            ? ((data[2] & 0xFF) << 8) | (data[3] & 0xFF)
-            : 0;
+        final batteryVoltageMv =
+            ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
 
         return BleDeviceInfo(
           id: result.device.remoteId,
           name: result.advertisementData.advName.isNotEmpty
               ? result.advertisementData.advName
               : result.device.advName,
-          macAddress: result.device.remoteId.str,
+          macAddress: _macFromServiceData(data),
           rssi: result.rssi,
           txPowerLevel: result.advertisementData.txPowerLevel,
           deviceType: deviceType,
