@@ -31,7 +31,7 @@ class _PosGpsL76CFixPageState extends State<PosGpsL76CFixPage> {
       final pdop = await api.readGpsPdopLimitL76C();
       if (!mounted) return;
       _timeout.text = Lw012ParamHelpers.uint16(timeout.data).toString();
-      _pdop.text = Lw012ParamHelpers.uint16(pdop.data).toString();
+      _pdop.text = Lw012ParamHelpers.uint8(pdop.data).toString();
     });
   }
 
@@ -46,7 +46,7 @@ class _PosGpsL76CFixPageState extends State<PosGpsL76CFixPage> {
       final api = widget.session.protocol;
       final ok = (await Future.wait([
         api.writeGpsPosTimeoutL76C(Lw012ParamHelpers.uint16Bytes(timeout)),
-        api.writeGpsPdopLimitL76C(Lw012ParamHelpers.uint16Bytes(pdop)),
+        api.writeGpsPdopLimitL76C(Lw012ParamHelpers.single(pdop)),
       ])).every((r) => r);
       if (mounted) await saveWithToast(context, () async => ok);
     });
